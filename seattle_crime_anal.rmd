@@ -7,10 +7,11 @@ output: html_document
 
 # Analysis of Crime frequency in Seattle 
 This analysis will attempt to highlight the frequency of crimes in the summer of
-2014 for the city of Seattle. The analysis will look at crime counts 
-* Date
-* Day of the week
-* Hour of the Day
+2014 for the city of Seattle. The analysis will look at crime counts by
+
+1. Date
+2. Day of the week
+3. Hour of the Day
 
 It's hoped that this analysis would aid police planners in allocating manpower
 and other resources to the times when crimes are most frequently committed
