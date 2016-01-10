@@ -1,0 +1,127 @@
+---
+title: "Seattle Crime Analysis by Dates and Times"
+author: "John Fitzpatrick"
+date: "January 10, 2016"
+output: html_document
+---
+
+# Analysis of Crime frequency in Seattle 
+This analysis will attempt to highlight the frequency of crimes in the summer of
+2014 for the city of Seattle. The analysis will look at crime counts 
+* Date
+* Day of the week
+* Hour of the Day
+
+It's hoped that this analysis would aid police planners in allocating manpower
+and other resources to the times when crimes are most frequently committed
+
+
+```{r read_and_format_data,echo=FALSE,message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+train_ds_path <- "..\\data\\seattle_incidents_summer_2014.csv"
+
+col_classes <- c(
+"character"
+,"character"
+,"factor"
+,"character"
+,"factor"
+,"factor"
+,"character"
+,"character"
+,"character"
+,"character"
+,"character"
+,"factor"
+,"factor"
+,"character"
+,"numeric"
+,"numeric"
+,"character"
+,"integer"
+,"integer"
+)
+
+dt <- read.table(train_ds_path
+                 ,header = TRUE
+                 ,sep = ","
+                 ,quote = "\"'"
+                 ,stringsAsFactors = FALSE
+                 ,colClasses = col_classes
+)
+
+colnames(dt)[9] <- "Occurred.Date.Range.Start"
+
+dt$Date.Reported <- mdy_hms(dt$Date.Reported, tz = "America/Los_Angeles")
+
+dt$Occurred.Date.Range.Start <- mdy_hms(dt$Occurred.Date.Range.Start, tz = "America/Los_Angeles")
+dt$Occurred.Date.Range.End <- mdy_hms(dt$Occurred.Date.Range.End, tz = "America/Los_Angeles")
+dt$Occurred.Date <- as.Date(dt$Occurred.Date.Range.Start)
+dt$wday <- wday(dt$Occurred.Date.Range.Start, label = TRUE)
+dt$hour <- hour(dt$Occurred.Date.Range.Start)
+
+```
+
+### Crimes by Date
+```{r crimes_by_date,echo=FALSE}
+by_date <- group_by(dt, Occurred.Date)
+crimes_by_dt <- summarise(by_date, count=length(General.Offense.Number))
+p1 <- ggplot(data = crimes_by_dt, aes(x = Occurred.Date, y = count)) +
+  xlab("Date") +
+  ylab("Count") +  
+  ggtitle("Seattle Crime Counts (Summer 2014)") +
+  geom_smooth(method="lm") +
+  geom_line() 
+
+print(p1)
+```
+
+We can see that there's a lot of variability in the crime counts 
+from day to day. But that there's a general downward trend from the
+beginning of the summer to the end of the summer. Without further
+information I believe the drop in crimes on the last day is likely
+due to some type of reporting anomaly since it's over twice as low
+as the next low crime day
+
+```{r explain_low_count,echo=FALSE}
+head(crimes_by_dt[order(crimes_by_dt$count),],5)
+
+```
+
+### Crimes by Day of Week
+```{r crimes_by_wday,echo=FALSE}
+p2 <- qplot(dt$wday,
+            geom="bar",
+            main = "Seattle Crime Counts (Summer 2014)", 
+            xlab = "Day of Week",
+            ylab = "Count",              
+            fill=I("deepskyblue1"), 
+            col=I("red")
+)
+print(p2)
+
+```
+
+There seems to be a noticeable increase in crime on Fridays compared to the 
+other days in the week
+
+### Crimes by Hour of the Day
+```{r crimes_by_hour,echo=FALSE}
+p3 <- qplot(dt$hour,
+            geom="bar",
+            main = "Seattle Crime Counts (Summer 2014)", 
+            xlab = "Hour of Day",  
+            ylab = "Count",                          
+            fill=I("deepskyblue1"), 
+            col=I("red"),
+)
+
+print(p3)
+```
+
+Crime is highest between midnight and 1AM and then drops sharply during the wee
+hours of the morning. It then starts picking up again around 6AM and increases steadily with a peak around noon. It remains high for the rest of the day until
+the new after-midnight peak is reached.
